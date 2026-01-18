@@ -7,7 +7,6 @@ import {
   Plus, 
   Sun, 
   Moon, 
-  Calendar as CalendarIcon, 
   Trophy,
   X,
   Pencil,
@@ -360,7 +359,7 @@ const App: React.FC = () => {
        <div className="px-3">
           <h3 className="h6 fw-bold mb-3 ms-1 text-muted text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>Achievements</h3>
           <div className="d-flex flex-column gap-3">
-            {user?.achievements.map((ach, idx) => (
+            {user?.achievements.map((ach) => (
                 <div key={ach.id} className="card border-0 shadow-sm rounded-4 card-hover delay-1 animate-slide-up">
                     <div className="card-body d-flex align-items-center gap-3 p-3">
                         <div className="fs-1">{ach.icon}</div>

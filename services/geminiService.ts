@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Habit, Task } from '../types';
+import { Habit } from '../types';
 
 const getAiClient = () => {
   if (!process.env.API_KEY) {
