@@ -582,12 +582,10 @@ const App: React.FC = () => {
                                 {modalType === 'profile' ? 'Edit Profile' : `${editingId ? 'Edit' : 'New'} ${modalType === 'habit' ? 'Habit' : 'Task'}`}
                             </h5>
                             <div className="d-flex gap-2 align-items-center">
-                                {/* Header Save Button for Profile for extra accessibility */}
-                                {modalType === 'profile' && (
-                                    <button onClick={saveItem} className="btn btn-primary btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 px-3">
-                                        <Save size={16} /> Save
-                                    </button>
-                                )}
+                                {/* Header Save Button - Enabled for all types */}
+                                <button onClick={saveItem} className="btn btn-primary btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 px-3">
+                                    <Save size={16} /> Save
+                                </button>
                                 <button onClick={closeModal} className="btn btn-light rounded-circle p-2">
                                     <X size={20} />
                                 </button>
@@ -610,7 +608,7 @@ const App: React.FC = () => {
                                             type="text" 
                                             value={editUserName}
                                             onChange={(e) => setEditUserName(e.target.value)}
-                                            className="form-control form-control-lg rounded-4 bg-light border-0"
+                                            className="form-control form-control-lg rounded-4 bg-light border-0 text-dark"
                                             placeholder="Enter your name"
                                         />
                                     </div>
@@ -639,7 +637,7 @@ const App: React.FC = () => {
                                         required
                                         value={newItemName}
                                         onChange={(e) => setNewItemName(e.target.value)}
-                                        className="form-control form-control-lg rounded-4 bg-light border-0"
+                                        className="form-control form-control-lg rounded-4 bg-light border-0 text-dark"
                                         placeholder={modalType === 'habit' ? "e.g., Drink Water" : "e.g., Buy Groceries"}
                                     />
                                 </div>
@@ -654,7 +652,7 @@ const App: React.FC = () => {
                                             type="time" 
                                             value={newItemTime}
                                             onChange={(e) => setNewItemTime(e.target.value)}
-                                            className="form-control form-control-lg rounded-4 bg-light border-0"
+                                            className="form-control form-control-lg rounded-4 bg-light border-0 text-dark"
                                         />
                                     </div>
                                  </div>
@@ -683,7 +681,7 @@ const App: React.FC = () => {
                                             type="text" 
                                             value={newItemDesc}
                                             onChange={(e) => setNewItemDesc(e.target.value)}
-                                            className="form-control form-control-lg rounded-4 bg-light border-0"
+                                            className="form-control form-control-lg rounded-4 bg-light border-0 text-dark"
                                             placeholder="Add details (optional)"
                                         />
                                     </div>

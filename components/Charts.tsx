@@ -27,18 +27,20 @@ export const WeeklyProgressChart: React.FC<{ data: WeeklyData[] }> = ({ data }) 
             dataKey="day" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: '#adb5bd', fontSize: 10 }} 
+            // Use CSS variable for body color to adapt to theme, ensuring dark text in light mode
+            tick={{ fill: 'var(--bs-body-color)', fontSize: 10, opacity: 0.8, fontWeight: 500 }} 
             dy={10}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: '#adb5bd', fontSize: 10 }} 
+            tick={{ fill: 'var(--bs-body-color)', fontSize: 10, opacity: 0.8, fontWeight: 500 }} 
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
           <Bar dataKey="completed" radius={[4, 4, 4, 4]} barSize={20}>
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.completed >= 3 ? '#6610f2' : '#c4b5fd'} />
+              // Use brand indigo colors instead of generic purple
+              <Cell key={`cell-${index}`} fill={entry.completed >= 3 ? '#6366f1' : '#a5b4fc'} />
             ))}
           </Bar>
         </BarChart>
