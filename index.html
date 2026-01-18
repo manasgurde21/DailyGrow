@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DailyGrow</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        --surface-color: #ffffff;
+        --bg-color: #f8fafc;
+      }
+
+      [data-bs-theme="dark"] {
+        --surface-color: #1e293b;
+        --bg-color: #0f172a;
+      }
+
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: var(--bg-color);
+        transition: background-color 0.3s ease;
+      }
+      
+      /* Custom Scrollbar Utilities */
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+      }
+      
+      /* Theme Aware Backgrounds */
+      .bg-surface {
+        background-color: var(--surface-color);
+      }
+
+      /* Enhanced Colors */
+      .bg-purple { background-color: #8b5cf6; color: white; }
+      .bg-indigo { background-color: #6366f1; color: white; }
+      .bg-pink { background-color: #ec4899; color: white; }
+      .bg-orange { background-color: #f97316; color: white; }
+      .bg-teal { background-color: #14b8a6; color: white; }
+      .bg-blue { background-color: #3b82f6; color: white; }
+      .bg-rose { background-color: #f43f5e; color: white; }
+      .bg-amber { background-color: #f59e0b; color: white; }
+      .bg-emerald { background-color: #10b981; color: white; }
+      .bg-cyan { background-color: #06b6d4; color: white; }
+
+      /* Modern Gradients */
+      .bg-gradient-brand {
+        background: var(--primary-gradient);
+      }
+
+      /* Transitions & Animations */
+      .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+      
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .animate-slide-up {
+        animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      .delay-1 { animation-delay: 0.1s; }
+      .delay-2 { animation-delay: 0.2s; }
+      .delay-3 { animation-delay: 0.3s; }
+
+      @keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+      }
+      
+      .animate-pulse-ring {
+        animation: pulse-ring 2s infinite;
+      }
+
+      /* Glassmorphism */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* Layout Helper */
+      .pb-safe { padding-bottom: 120px; }
+      
+      /* Card Interactions */
+      .card-hover { 
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .card-hover:active {
+        transform: scale(0.98);
+      }
+      
+      .nav-icon-active {
+        background: rgba(99, 102, 241, 0.1);
+        color: #6366f1;
+      }
+      [data-bs-theme="dark"] .nav-icon-active {
+        background: rgba(99, 102, 241, 0.2);
+        color: #818cf8;
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Vite Entry Point -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
