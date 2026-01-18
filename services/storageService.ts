@@ -1,35 +1,70 @@
+import { db, UserProfileEntity } from './db';
 import { Habit, Task, UserProfile } from '../types';
 import { INITIAL_HABITS, INITIAL_TASKS, MOCK_USER } from '../constants';
 
-const HABITS_KEY = 'dailygrow_habits';
-const TASKS_KEY = 'dailygrow_tasks';
-const USER_KEY = 'dailygrow_user';
+const USER_ID = 'currentUser';
 
-export const getStoredHabits = (): Habit[] => {
-  const stored = localStorage.getItem(HABITS_KEY);
-  if (stored) return JSON.parse(stored);
-  // Initialize with today's date in completedDates for demo purposes if creating fresh
-  return INITIAL_HABITS; 
+// --- Habits ---
+
+export const getStoredHabits = async (): Promise<Habit[]> => {
+  const count = await db.habits.count();
+  if (count === 0) {
+    await db.habits.bulkAdd(INITIAL_HABITS);
+    return INITIAL_HABITS;
+  }
+  return await db.habits.toArray();
 };
 
-export const saveHabits = (habits: Habit[]) => {
-  localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+export const addHabit = async (habit: Habit) => {
+  await db.habits.put(habit);
 };
 
-export const getStoredTasks = (): Task[] => {
-  const stored = localStorage.getItem(TASKS_KEY);
-  return stored ? JSON.parse(stored) : INITIAL_TASKS;
+export const updateHabit = async (habit: Habit) => {
+  await db.habits.put(habit);
 };
 
-export const saveTasks = (tasks: Task[]) => {
-  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+export const deleteHabit = async (id: string) => {
+  await db.habits.delete(id);
 };
 
-export const getStoredUser = (): UserProfile => {
-  const stored = localStorage.getItem(USER_KEY);
-  return stored ? JSON.parse(stored) : MOCK_USER;
+// --- Tasks ---
+
+export const getStoredTasks = async (): Promise<Task[]> => {
+  const count = await db.tasks.count();
+  if (count === 0) {
+    await db.tasks.bulkAdd(INITIAL_TASKS);
+    return INITIAL_TASKS;
+  }
+  return await db.tasks.toArray();
 };
 
-export const saveUser = (user: UserProfile) => {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+export const addTask = async (task: Task) => {
+  await db.tasks.put(task);
+};
+
+export const updateTask = async (task: Task) => {
+  await db.tasks.put(task);
+};
+
+export const deleteTask = async (id: string) => {
+  await db.tasks.delete(id);
+};
+
+// --- User Profile ---
+
+export const getStoredUser = async (): Promise<UserProfile> => {
+  const user = await db.user.get(USER_ID);
+  if (!user) {
+    const newUser: UserProfileEntity = { ...MOCK_USER, id: USER_ID };
+    await db.user.put(newUser);
+    return MOCK_USER;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, ...profile } = user;
+  return profile;
+};
+
+export const saveUser = async (user: UserProfile) => {
+  const userEntity: UserProfileEntity = { ...user, id: USER_ID };
+  await db.user.put(userEntity);
 };

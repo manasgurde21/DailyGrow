@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { Habit, Task, UserProfile, TabView, Priority } from './types';
 import { 
-  getStoredHabits, saveHabits, 
-  getStoredTasks, saveTasks, 
+  getStoredHabits, addHabit, updateHabit, 
+  getStoredTasks, addTask, updateTask, deleteTask as deleteDbTask,
   getStoredUser, saveUser 
 } from './services/storageService';
 import { generateDailyMotivation, generateHabitInsight } from './services/geminiService';
@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [motivation, setMotivation] = useState<string>("Loading motivation...");
   const [insight, setInsight] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,26 +54,36 @@ const App: React.FC = () => {
 
   // Initialization
   useEffect(() => {
-    const loadedHabits = getStoredHabits();
-    const loadedTasks = getStoredTasks();
-    const loadedUser = getStoredUser();
-    
-    setHabits(loadedHabits);
-    setTasks(loadedTasks);
-    setUser(loadedUser);
+    const initializeData = async () => {
+      try {
+        const [loadedHabits, loadedTasks, loadedUser] = await Promise.all([
+          getStoredHabits(),
+          getStoredTasks(),
+          getStoredUser()
+        ]);
+        
+        setHabits(loadedHabits);
+        setTasks(loadedTasks);
+        setUser(loadedUser);
 
-    const completedToday = loadedHabits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length;
-    generateDailyMotivation(completedToday, loadedHabits.length).then(setMotivation);
+        const completedToday = loadedHabits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length;
+        // Generate motivation in background
+        generateDailyMotivation(completedToday, loadedHabits.length).then(setMotivation);
+      } catch (error) {
+        console.error("Failed to load data from database", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeData();
 
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setDarkMode(true);
     }
   }, []);
 
-  // Effects
-  useEffect(() => { saveHabits(habits); }, [habits]);
-  useEffect(() => { saveTasks(tasks); }, [tasks]);
-  useEffect(() => { if (user) saveUser(user); }, [user]);
+  // Theme Effect
   useEffect(() => {
     document.documentElement.setAttribute('data-bs-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
@@ -80,22 +91,58 @@ const App: React.FC = () => {
   // Logic Helpers
   const today = new Date().toISOString().split('T')[0];
 
-  const toggleHabit = (id: string) => {
-    setHabits(prev => prev.map(h => {
-      if (h.id !== id) return h;
-      const isCompleted = h.completedDates.includes(today);
-      const newDates = isCompleted ? h.completedDates.filter(d => d !== today) : [...h.completedDates, today];
-      const newStreak = isCompleted ? Math.max(0, h.streak - 1) : h.streak + 1;
-      return { ...h, completedDates: newDates, streak: newStreak };
-    }));
+  const toggleHabit = async (id: string) => {
+    const habitToUpdate = habits.find(h => h.id === id);
+    if (!habitToUpdate) return;
+
+    const isCompleted = habitToUpdate.completedDates.includes(today);
+    const newDates = isCompleted 
+      ? habitToUpdate.completedDates.filter(d => d !== today) 
+      : [...habitToUpdate.completedDates, today];
+    
+    const newStreak = isCompleted 
+      ? Math.max(0, habitToUpdate.streak - 1) 
+      : habitToUpdate.streak + 1;
+
+    const updatedHabit = { 
+      ...habitToUpdate, 
+      completedDates: newDates, 
+      streak: newStreak 
+    };
+
+    // Optimistic Update
+    setHabits(prev => prev.map(h => h.id === id ? updatedHabit : h));
+    
+    // DB Update
+    await updateHabit(updatedHabit);
+
+    // Update user stats if newly completed
+    if (!isCompleted && user) {
+      const updatedUser = { ...user, totalHabitsCompleted: user.totalHabitsCompleted + 1 };
+      setUser(updatedUser);
+      await saveUser(updatedUser);
+    }
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const toggleTask = async (id: string) => {
+    const taskToUpdate = tasks.find(t => t.id === id);
+    if (!taskToUpdate) return;
+
+    const updatedTask = { ...taskToUpdate, completed: !taskToUpdate.completed };
+    
+    setTasks(prev => prev.map(t => t.id === id ? updatedTask : t));
+    await updateTask(updatedTask);
+
+    if (updatedTask.completed && user) {
+        const updatedUser = { ...user, totalTasksCompleted: user.totalTasksCompleted + 1 };
+        setUser(updatedUser);
+        await saveUser(updatedUser);
+    }
   };
 
-  const deleteTask = (id: string) => {
+  const handleDeleteTask = async (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
+    await deleteDbTask(id);
   };
 
   // CRUD & Modal Handling
@@ -147,10 +194,16 @@ const App: React.FC = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
-  const saveItem = (e: React.FormEvent) => {
+  const saveItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Profile Save
     if (modalType === 'profile') {
-      if (user) setUser({ ...user, name: editUserName, avatarUrl: editUserAvatar });
+      if (user) {
+        const updatedUser = { ...user, name: editUserName, avatarUrl: editUserAvatar };
+        setUser(updatedUser);
+        await saveUser(updatedUser);
+      }
       closeModal();
       return;
     }
@@ -159,15 +212,48 @@ const App: React.FC = () => {
     
     if (modalType === 'habit') {
       if (editingId) {
-        setHabits(prev => prev.map(h => h.id === id ? { ...h, name: newItemName, reminderTime: newItemTime, color: newItemColor } : h));
+        // Update Habit
+        const existing = habits.find(h => h.id === editingId);
+        if (existing) {
+          const updatedHabit = { ...existing, name: newItemName, reminderTime: newItemTime, color: newItemColor };
+          setHabits(prev => prev.map(h => h.id === id ? updatedHabit : h));
+          await updateHabit(updatedHabit);
+        }
       } else {
-        setHabits([...habits, { id, name: newItemName, type: 'Daily', reminderTime: newItemTime, color: newItemColor, streak: 0, completedDates: [] }]);
+        // Create Habit
+        const newHabit: Habit = { 
+          id, 
+          name: newItemName, 
+          type: 'Daily', 
+          reminderTime: newItemTime, 
+          color: newItemColor, 
+          streak: 0, 
+          completedDates: [] 
+        };
+        setHabits([...habits, newHabit]);
+        await addHabit(newHabit);
       }
     } else {
       if (editingId) {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, title: newItemName, description: newItemDesc, priority: newItemPriority } : t));
+        // Update Task
+        const existing = tasks.find(t => t.id === editingId);
+        if (existing) {
+            const updatedTask = { ...existing, title: newItemName, description: newItemDesc, priority: newItemPriority };
+            setTasks(prev => prev.map(t => t.id === id ? updatedTask : t));
+            await updateTask(updatedTask);
+        }
       } else {
-        setTasks([...tasks, { id, title: newItemName, description: newItemDesc, date: today, priority: newItemPriority, completed: false }]);
+        // Create Task
+        const newTask: Task = { 
+            id, 
+            title: newItemName, 
+            description: newItemDesc, 
+            date: today, 
+            priority: newItemPriority, 
+            completed: false 
+        };
+        setTasks([...tasks, newTask]);
+        await addTask(newTask);
       }
     }
     closeModal();
@@ -187,11 +273,23 @@ const App: React.FC = () => {
   }, [habits.length]);
 
   useEffect(() => {
-    if (activeTab === 'stats') generateHabitInsight(habits).then(setInsight);
+    if (activeTab === 'stats' && habits.length > 0) {
+      generateHabitInsight(habits).then(setInsight);
+    }
   }, [activeTab, habits]);
 
   // Fallback Name Logic
   const displayName = (user?.name && user.name.trim() !== '') ? user.name : "User";
+
+  if (isLoading) {
+    return (
+        <div className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary">
+            <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    );
+  }
 
   // Views
   const renderHome = () => (
@@ -279,7 +377,7 @@ const App: React.FC = () => {
                 <TaskCard 
                     task={task} 
                     onToggle={toggleTask} 
-                    onDelete={deleteTask}
+                    onDelete={handleDeleteTask}
                     onEdit={(t) => openEditModal(t, 'task')}
                 />
             </div>
@@ -398,7 +496,7 @@ const App: React.FC = () => {
                     <div>
                          {tasks.map((t, idx) => (
                              <div key={t.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-                                <TaskCard task={t} onToggle={toggleTask} onDelete={deleteTask} onEdit={(t) => openEditModal(t, 'task')} />
+                                <TaskCard task={t} onToggle={toggleTask} onDelete={handleDeleteTask} onEdit={(t) => openEditModal(t, 'task')} />
                              </div>
                          ))}
                     </div>
