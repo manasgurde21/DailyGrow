@@ -1,17 +1,12 @@
 import { db, UserProfileEntity } from './db';
 import { Habit, Task, UserProfile } from '../types';
-import { INITIAL_HABITS, INITIAL_TASKS, MOCK_USER } from '../constants';
+import { MOCK_USER } from '../constants';
 
 const USER_ID = 'currentUser';
 
 // --- Habits ---
 
 export const getStoredHabits = async (): Promise<Habit[]> => {
-  const count = await db.habits.count();
-  if (count === 0) {
-    await db.habits.bulkAdd(INITIAL_HABITS);
-    return INITIAL_HABITS;
-  }
   return await db.habits.toArray();
 };
 
@@ -30,11 +25,6 @@ export const deleteHabit = async (id: string) => {
 // --- Tasks ---
 
 export const getStoredTasks = async (): Promise<Task[]> => {
-  const count = await db.tasks.count();
-  if (count === 0) {
-    await db.tasks.bulkAdd(INITIAL_TASKS);
-    return INITIAL_TASKS;
-  }
   return await db.tasks.toArray();
 };
 

@@ -11,11 +11,12 @@ import {
   X,
   Pencil,
   Sparkles,
-  Leaf
+  Leaf,
+  Save // Added Save icon
 } from 'lucide-react';
 import { Habit, Task, UserProfile, TabView, Priority } from './types';
 import { 
-  getStoredHabits, addHabit, updateHabit, 
+  getStoredHabits, addHabit, updateHabit, deleteHabit as deleteDbHabit,
   getStoredTasks, addTask, updateTask, deleteTask as deleteDbTask,
   getStoredUser, saveUser 
 } from './services/storageService';
@@ -68,7 +69,11 @@ const App: React.FC = () => {
 
         const completedToday = loadedHabits.filter(h => h.completedDates.includes(new Date().toISOString().split('T')[0])).length;
         // Generate motivation in background
-        generateDailyMotivation(completedToday, loadedHabits.length).then(setMotivation);
+        if (loadedHabits.length > 0) {
+            generateDailyMotivation(completedToday, loadedHabits.length).then(setMotivation);
+        } else {
+            setMotivation("Welcome! Start by adding your first habit.");
+        }
       } catch (error) {
         console.error("Failed to load data from database", error);
       } finally {
@@ -124,6 +129,13 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteHabit = async (id: string) => {
+    if (confirm('Are you sure you want to delete this habit?')) {
+        setHabits(prev => prev.filter(h => h.id !== id));
+        await deleteDbHabit(id);
+    }
+  };
+
   const toggleTask = async (id: string) => {
     const taskToUpdate = tasks.find(t => t.id === id);
     if (!taskToUpdate) return;
@@ -141,8 +153,10 @@ const App: React.FC = () => {
   };
 
   const handleDeleteTask = async (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    await deleteDbTask(id);
+    if (confirm('Are you sure you want to delete this task?')) {
+        setTasks(prev => prev.filter(t => t.id !== id));
+        await deleteDbTask(id);
+    }
   };
 
   // CRUD & Modal Handling
@@ -354,6 +368,7 @@ const App: React.FC = () => {
                   isCompletedToday={habit.completedDates.includes(today)} 
                   onToggle={toggleHabit} 
                   onEdit={(h) => openEditModal(h, 'habit')}
+                  onDelete={handleDeleteHabit}
                 />
             </div>
           ))}
@@ -436,7 +451,8 @@ const App: React.FC = () => {
     <div className="pb-safe animate-slide-up">
        <div className="card border-0 shadow-sm rounded-bottom-5 mb-4 text-center bg-body position-relative overflow-hidden">
           <div className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-brand opacity-10"></div>
-          <div className="position-absolute top-0 end-0 p-3 z-1">
+          {/* Increased Z-Index to 3 to ensure button is clickable above background layers */}
+          <div className="position-absolute top-0 end-0 p-3 z-3">
              <button onClick={openProfileEditModal} className="btn btn-light btn-sm rounded-circle p-2 shadow-sm transition-all card-hover text-primary">
                 <Pencil size={18} />
              </button>
@@ -449,13 +465,19 @@ const App: React.FC = () => {
                     <User size={48} className="text-secondary opacity-50" />
                 )}
               </div>
-              <h2 className="h3 fw-bold mb-1">{displayName}</h2>
+              {/* Darkened text color for visibility */}
+              <h2 className="display-6 fw-bolder mb-1 text-body-emphasis">{displayName}</h2>
               <p className="text-muted small fw-medium">Seedling • Level 1</p>
           </div>
        </div>
 
        <div className="px-3">
           <h3 className="h6 fw-bold mb-3 ms-1 text-muted text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>Achievements</h3>
+          {user?.achievements.length === 0 && (
+             <div className="text-center py-4 text-muted small border rounded-4 border-dashed">
+                 No achievements yet. Keep growing! 🌟
+             </div>
+          )}
           <div className="d-flex flex-column gap-3">
             {user?.achievements.map((ach) => (
                 <div key={ach.id} className="card border-0 shadow-sm rounded-4 card-hover delay-1 animate-slide-up">
@@ -482,9 +504,20 @@ const App: React.FC = () => {
                 <div className="pb-safe animate-slide-up">
                     <h1 className="h3 fw-bold mb-4 pt-4 px-2">All Habits</h1>
                     <div className="d-flex flex-column gap-2">
+                        {habits.length === 0 && (
+                             <div className="text-center py-5 border rounded-4 border-dashed">
+                                 <p className="text-muted mb-0">No habits yet. Start blooming! 🌱</p>
+                             </div>
+                        )}
                         {habits.map((h, idx) => (
                             <div key={h.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-                                <HabitCard habit={h} isCompletedToday={h.completedDates.includes(today)} onToggle={toggleHabit} onEdit={(h) => openEditModal(h, 'habit')} />
+                                <HabitCard 
+                                    habit={h} 
+                                    isCompletedToday={h.completedDates.includes(today)} 
+                                    onToggle={toggleHabit} 
+                                    onEdit={(h) => openEditModal(h, 'habit')}
+                                    onDelete={handleDeleteHabit}
+                                />
                             </div>
                         ))}
                     </div>
@@ -494,6 +527,11 @@ const App: React.FC = () => {
                 <div className="pb-safe animate-slide-up">
                     <h1 className="h3 fw-bold mb-4 pt-4 px-2">Task List</h1>
                     <div>
+                         {tasks.length === 0 && (
+                            <div className="text-center py-5 border rounded-4 border-dashed">
+                                <p className="text-muted mb-0">No tasks. Free mind! 🌬️</p>
+                            </div>
+                         )}
                          {tasks.map((t, idx) => (
                              <div key={t.id} className="animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
                                 <TaskCard task={t} onToggle={toggleTask} onDelete={handleDeleteTask} onEdit={(t) => openEditModal(t, 'task')} />
@@ -543,9 +581,17 @@ const App: React.FC = () => {
                             <h5 className="fw-bold mb-0 display-6" style={{ fontSize: '1.5rem' }}>
                                 {modalType === 'profile' ? 'Edit Profile' : `${editingId ? 'Edit' : 'New'} ${modalType === 'habit' ? 'Habit' : 'Task'}`}
                             </h5>
-                            <button onClick={closeModal} className="btn btn-light rounded-circle p-2">
-                                <X size={20} />
-                            </button>
+                            <div className="d-flex gap-2 align-items-center">
+                                {/* Header Save Button for Profile for extra accessibility */}
+                                {modalType === 'profile' && (
+                                    <button onClick={saveItem} className="btn btn-primary btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 px-3">
+                                        <Save size={16} /> Save
+                                    </button>
+                                )}
+                                <button onClick={closeModal} className="btn btn-light rounded-circle p-2">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         {modalType !== 'profile' && !editingId && (
@@ -663,7 +709,7 @@ const App: React.FC = () => {
                                 type="submit" 
                                 className="btn btn-primary btn-lg w-100 rounded-4 mt-2 fw-bold shadow-lg py-3"
                             >
-                                {modalType === 'profile' ? 'Save Profile' : `${editingId ? 'Update' : 'Create'} ${modalType === 'habit' ? 'Habit' : 'Task'}`}
+                                {modalType === 'profile' ? 'Save Changes' : `${editingId ? 'Update' : 'Create'} ${modalType === 'habit' ? 'Habit' : 'Task'}`}
                             </button>
                         </form>
                     </div>

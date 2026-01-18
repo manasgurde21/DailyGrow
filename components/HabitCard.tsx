@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Flame, Clock, Pencil } from 'lucide-react';
+import { Check, Flame, Clock, Pencil, Trash2 } from 'lucide-react';
 import { Habit } from '../types';
 
 interface HabitCardProps {
@@ -7,9 +7,10 @@ interface HabitCardProps {
   isCompletedToday: boolean;
   onToggle: (id: string) => void;
   onEdit: (habit: Habit) => void;
+  onDelete: (id: string) => void;
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompletedToday, onToggle, onEdit }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompletedToday, onToggle, onEdit, onDelete }) => {
   return (
     <div 
         className={`card mb-3 border-0 rounded-4 transition-all cursor-pointer position-relative overflow-hidden ${isCompletedToday ? 'bg-success-subtle' : 'bg-surface shadow-sm'}`}
@@ -34,15 +35,28 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompletedToday, onToggle
                 <h6 className={`mb-0 fw-bold me-2 ${isCompletedToday ? 'text-decoration-line-through text-muted' : 'text-body'}`}>
                   {habit.name}
                 </h6>
-                {/* Aesthetic Edit Button */}
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onEdit(habit); }}
-                  className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 transition-all text-secondary bg-body-tertiary hover-scale"
-                  style={{ width: '26px', height: '26px' }}
-                  title="Edit Habit"
-                >
-                  <Pencil size={12} strokeWidth={2.5} />
-                </button>
+                
+                <div className="d-flex gap-1">
+                   {/* Aesthetic Edit Button */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onEdit(habit); }}
+                      className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 transition-all text-secondary bg-body-tertiary hover-scale"
+                      style={{ width: '26px', height: '26px' }}
+                      title="Edit Habit"
+                    >
+                      <Pencil size={12} strokeWidth={2.5} />
+                    </button>
+                    {/* Delete Button */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDelete(habit.id); }}
+                      className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 transition-all text-danger bg-danger-subtle hover-scale"
+                      style={{ width: '26px', height: '26px' }}
+                      title="Delete Habit"
+                    >
+                      <Trash2 size={12} strokeWidth={2.5} />
+                    </button>
+                </div>
+
               </div>
               <div className="d-flex align-items-center small gap-3 mt-1">
                 <span className="d-flex align-items-center gap-1 bg-light rounded-pill px-2 py-0.5 text-secondary fw-medium">
